@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.comment;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -13,40 +13,37 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Getter;
-import lombok.ToString;
 import lombok.Builder;
+import java.time.LocalDateTime;
 
+import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.user.User;
 
-/**
- * TODO Sprint add-controllers.
- */
-
 @Entity
-@Table(name = "items")
+@Table(name = "comments")
 @Getter
 @Setter
 @Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class Item {
+public class Comment {
 
     @Id
-    @Column(name = "item_id")
+    @Column(name = "comment_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    @Column(name = "description", nullable = false)
-    private String description;
-
-    @Column(name = "available", nullable = false)
-    private Boolean available;
+    @Column(name = "text", nullable = false)
+    private String text;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner", nullable = false)
-    private User owner;
+    @JoinColumn(name = "item_id", nullable = false)
+    private Item item;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
+
+    @Column(name = "created", nullable = false)
+    private LocalDateTime created;
 }

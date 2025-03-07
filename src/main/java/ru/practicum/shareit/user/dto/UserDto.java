@@ -9,9 +9,9 @@ import lombok.Data;
 @Builder
 public class UserDto {
     private Long id;
-    @NotBlank(message = "Пустой name")
+    @NotBlank(message = "Имя не может быть пустым")
     private String name;
-    @NotBlank(message = "Пустой Email")
-    @Email(message = "отсутствует символ @")
+    @NotBlank(message = "Email не может быть пустым")
+    @Email(message = "Некорректный email")
     private String email;
 }

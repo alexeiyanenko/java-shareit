@@ -3,47 +3,64 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import ru.practicum.shareit.exception.EmailValidationException;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.storage.UserStorage;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
 
     @Override
     public List<UserDto> getUsers() {
-        return userStorage.getUsers().stream()
+        return userRepository.findAll().stream()
                 .map(UserMapper::toUserDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public UserDto createUser(UserDto userDto) {
+        if (userRepository.existsByEmail(userDto.getEmail())) {
+            throw new EmailValidationException("Email уже используется: " + userDto.getEmail());
+        }
         User user = UserMapper.toUser(userDto);
-        return UserMapper.toUserDto(userStorage.createUser(user));
+        return UserMapper.toUserDto(userRepository.save(user));
     }
 
     @Override
     public UserDto updateUser(Long userId, UserDto newUserDto) {
-        User user = UserMapper.toUser(newUserDto);
-        user.setId(userId);
-        return UserMapper.toUserDto(userStorage.updateUser(user));
+        if (userRepository.existsByEmail(newUserDto.getEmail())) {
+            throw new EmailValidationException("Email уже используется: " + newUserDto.getEmail());
+        }
+        UserDto oldUser = getUserById(userId);
+        if (newUserDto.getName() != null) {
+            oldUser.setName(newUserDto.getName());
+        }
+        if (newUserDto.getEmail() != null) {
+            oldUser.setEmail(newUserDto.getEmail());
+        }
+        User user = UserMapper.toUser(oldUser);
+        user = userRepository.save(user);
+        return UserMapper.toUserDto(user);
     }
 
     @Override
     public UserDto getUserById(Long id) {
-        return UserMapper.toUserDto(userStorage.getUserById(id));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + id + " не найден"));
+        return UserMapper.toUserDto(user);
     }
 
     @Override
     public void delete(Long id) {
-        userStorage.delete(id);
+        userRepository.deleteById(id);
     }
 }

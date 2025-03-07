@@ -2,9 +2,9 @@ package ru.practicum.shareit.request;
 
 import lombok.Builder;
 import lombok.Data;
-import ru.practicum.shareit.user.User;
-
 import java.time.LocalDateTime;
+
+import ru.practicum.shareit.user.User;
 
 /**
  * TODO Sprint add-item-requests.
@@ -14,6 +14,6 @@ import java.time.LocalDateTime;
 public class ItemRequest {
     private Long id;
     private String description;
-    private User requester;
+    private User requestor;
     private LocalDateTime created;
 }

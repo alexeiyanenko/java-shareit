@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.model.ItemRequest;
-import ru.practicum.shareit.request.model.NewItemRequest;
+import ru.practicum.shareit.request.dto.NewItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

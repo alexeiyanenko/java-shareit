@@ -5,12 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.repository.BookingRepository;
-import ru.practicum.shareit.booking.model.NewBookingRequest;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -28,19 +29,23 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
 
     @Override
-    public BookingDto addBooking(long userId, NewBookingRequest newBookingRequest) {
-        log.info("Добавление бронирования: userId = {}, itemId = {}", userId, newBookingRequest.getItemId());
+    public BookingDto addBooking(Long userId, Long itemId, LocalDateTime start, LocalDateTime end) {
+        log.info("Добавление бронирования: userId = {}, itemId = {}", userId, itemId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id = " + userId + " не найден"));
-        Item item = itemRepository.findById(newBookingRequest.getItemId())
-                .orElseThrow(() -> new NotFoundException("Предмет с id = " + newBookingRequest.getItemId() + " не найден"));
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Предмет с id = " + itemId + " не найден"));
 
         if (!item.isAvailable()) {
             throw new ValidationException("Предмет с id = " + item.getId() + " недоступен для бронирования");
         }
 
-        Booking booking = BookingMapper.fromBookingRequest(newBookingRequest, item, user);
+        Booking booking = new Booking();
+        booking.setItem(item);
+        booking.setBooker(user);
+        booking.setStart(start);
+        booking.setEnd(end);
         booking.setStatus(Booking.StatusType.WAITING);
 
         log.info("Бронирование создано: {}", booking);

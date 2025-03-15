@@ -5,23 +5,11 @@ import lombok.NoArgsConstructor;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-import ru.practicum.shareit.booking.model.NewBookingRequest;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.model.User;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BookingMapper {
-    public static Booking fromBookingRequest(NewBookingRequest bookingRequest, Item item, User user) {
-        Booking booking = new Booking();
-
-        booking.setStart(bookingRequest.getStart());
-        booking.setEnd(bookingRequest.getEnd());
-        booking.setItem(item);
-        booking.setBooker(user);
-        return booking;
-    }
 
     public static BookingDto toBookingDto(Booking booking) {
         String start = DateTimeFormatter

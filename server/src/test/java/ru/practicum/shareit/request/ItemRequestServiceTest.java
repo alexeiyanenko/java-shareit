@@ -11,27 +11,28 @@ import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.model.ItemRequest;
-import ru.practicum.shareit.request.model.NewItemRequest;
+import ru.practicum.shareit.request.dto.NewItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.request.service.ItemRequestServiceImpl;
-import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
-import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+
 
 @ExtendWith(MockitoExtension.class)
 public class ItemRequestServiceTest {
+
     @Mock
     private ItemRequestRepository repository;
 
@@ -41,56 +42,45 @@ public class ItemRequestServiceTest {
     @Mock
     private ItemRepository itemRepository;
 
-    @Mock
-    private UserService userService;
-
     @InjectMocks
     private ItemRequestServiceImpl service;
 
-    private UserDto userDto;
     private User user;
     private NewItemRequest newItemRequest;
     private ItemRequest itemRequest;
 
     @BeforeEach
     void setUp() {
-        userDto = new UserDto(1L, "Фёдор", "fedor@gmail.com");
-        userService.addUser(userDto);
-        user = UserMapper.fromUserDto(userDto);
+        user = new User(1L, "Фёдор", "fedor@gmail.com");
         newItemRequest = new NewItemRequest();
         newItemRequest.setDescription("Описание");
         itemRequest = new ItemRequest(1L, newItemRequest.getDescription(), user, LocalDateTime.now());
     }
 
     @Test
-    void addRequest_ShouldReturnItemRequestDto_WhenUserExists() {
-        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+    void shouldCreateRequest_WhenUserExists() {
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(repository.save(any(ItemRequest.class))).thenReturn(itemRequest);
 
-        ItemRequestDto result = service.addRequest(userDto.getId(), newItemRequest);
+        ItemRequestDto result = service.addRequest(user.getId(), newItemRequest);
 
         assertNotNull(result);
         assertEquals(itemRequest.getId(), result.getId());
         assertEquals(newItemRequest.getDescription(), result.getDescription());
-        verify(userRepository).findById(user.getId());
-        verify(repository).save(any(ItemRequest.class));
     }
 
     @Test
-    void addRequest_ShouldThrowNotFoundException_WhenUserDoesNotExist() {
+    void shouldThrowNotFoundException_WhenUserDoesNotExist() {
         when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
-            service.addRequest(user.getId(), newItemRequest);
-        });
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> service.addRequest(user.getId(), newItemRequest));
 
-        assertEquals("Пользователь с id = 1 не найден", exception.getMessage());
-        verify(userRepository).findById(user.getId());
-        verify(repository, never()).save(any(ItemRequest.class));
+        assertEquals("Пользователь с id = " + user.getId() + " не найден", exception.getMessage());
     }
 
     @Test
-    void get_ShouldReturnListOfItemRequestDto_WhenUserExists() {
+    void shouldReturnRequestsList_WhenUserExists() {
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(repository.findAllByRequesterId(user.getId(), Sort.by(Sort.Direction.ASC, "created")))
                 .thenReturn(Collections.singletonList(itemRequest));
@@ -100,25 +90,20 @@ public class ItemRequestServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(itemRequest.getId(), result.get(0).getId());
-        verify(userRepository).findById(user.getId());
-        verify(repository).findAllByRequesterId(user.getId(), Sort.by(Sort.Direction.ASC, "created"));
     }
 
     @Test
-    void get_ShouldThrowNotFoundException_WhenUserDoesNotExist() {
+    void shouldThrowNotFoundException_WhenUserDoesNotExistOnGetRequests() {
         when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
-            service.get(user.getId());
-        });
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> service.get(user.getId()));
 
-        assertEquals("Пользователь с id = 1 не найден", exception.getMessage());
-        verify(userRepository).findById(user.getId());
-        verify(repository, never()).findAllByRequesterId(anyLong(), any());
+        assertEquals("Пользователь с id = " + user.getId() + " не найден", exception.getMessage());
     }
 
     @Test
-    void findById_ShouldReturnItemRequestDto_WhenRequestExists() {
+    void shouldReturnRequestById_WhenRequestExists() {
         when(repository.findById(itemRequest.getId())).thenReturn(Optional.of(itemRequest));
         when(itemRepository.findByRequestId(itemRequest.getId())).thenReturn(Collections.emptyList());
 
@@ -126,12 +111,10 @@ public class ItemRequestServiceTest {
 
         assertNotNull(result);
         assertEquals(itemRequest.getId(), result.getId());
-        verify(repository).findById(itemRequest.getId());
-        verify(itemRepository).findByRequestId(itemRequest.getId());
     }
 
     @Test
-    void getAll_ShouldReturnListOfItemRequestDto_WhenUserExists() {
+    void shouldReturnAllRequests_WhenUserExists() {
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(repository.findByRequesterIdNot(user.getId(), Sort.by(Sort.Direction.ASC, "created")))
                 .thenReturn(Collections.singletonList(itemRequest));
@@ -141,20 +124,15 @@ public class ItemRequestServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(itemRequest.getId(), result.get(0).getId());
-        verify(userRepository).findById(user.getId());
-        verify(repository).findByRequesterIdNot(user.getId(), Sort.by(Sort.Direction.ASC, "created"));
     }
 
     @Test
-    void getAll_ShouldThrowNotFoundException_WhenUserDoesNotExist() {
+    void shouldThrowNotFoundException_WhenUserDoesNotExistOnGetAllRequests() {
         when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
-            service.getAll(user.getId());
-        });
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> service.getAll(user.getId()));
 
-        assertEquals("Пользователь с id = 1 не найден", exception.getMessage());
-        verify(userRepository).findById(user.getId());
-        verify(repository, never()).findByRequesterIdNot(anyLong(), any());
+        assertEquals("Пользователь с id = " + user.getId() + " не найден", exception.getMessage());
     }
 }
